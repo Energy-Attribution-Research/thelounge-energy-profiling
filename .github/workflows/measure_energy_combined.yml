@@ -61,6 +61,15 @@ jobs:
           '@ | Out-File -FilePath "$env:DATA_DIR\write-json.ps1" -Encoding ascii
         shell: powershell
 
+      # --- INFRASTRUCTURE: pre-pull Node image (NOT profiled) ---
+      # The image download must NOT happen inside a measured scenario, or its
+      # network/disk cost would pollute the Yarn_Install energy reading.
+      - name: Pre-pull Node Image
+        run: |
+          Write-Host "Pre-pulling $env:NODE_IMAGE (excluded from all measurements)..."
+          docker pull --platform linux/amd64 $env:NODE_IMAGE
+        shell: powershell
+
       # --- SCENARIO 1: IDLE (BASELINE) ---
       - name: Profile Idle Scenario
         run: |
@@ -432,6 +441,15 @@ jobs:
           EOFMETA
           echo "Hardware metadata captured:"
           cat "$META_FILE"
+        shell: bash
+
+      # --- INFRASTRUCTURE: pre-pull Node image (NOT profiled) ---
+      # The image download must NOT happen inside a measured scenario, or its
+      # network/disk cost would pollute the Yarn_Install energy reading.
+      - name: Pre-pull Node Image
+        run: |
+          echo "Pre-pulling $NODE_IMAGE (excluded from all measurements)..."
+          docker pull --platform linux/arm64 "$NODE_IMAGE"
         shell: bash
 
       # --- SCENARIO 1: IDLE (BASELINE) ---
