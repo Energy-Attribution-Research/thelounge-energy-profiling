@@ -15,7 +15,7 @@ jobs:
       RUN_ID: "win_${{ github.run_id }}"
       DATA_DIR: "D:\\myPortfolioProject\\thelounge-energy-profiling\\ResearchData\\cpudata\\win_${{ github.run_id }}"
       UPROF_PATH: "C:\\Program Files\\AMD\\AMDuProf\\bin\\AMDuProfCLI.exe"
-      NODE_IMAGE: "node:22"
+      NODE_IMAGE: "node:22-slim"
 
     steps:
       - name: Checkout Code
@@ -401,7 +401,7 @@ jobs:
       PROJECT_NAME: "thelounge"
       RUN_ID: "mac_${{ github.run_id }}"
       DATA_DIR: "${{ github.workspace }}/ResearchData/cpudata/mac_${{ github.run_id }}"
-      NODE_IMAGE: "node:22"
+      NODE_IMAGE: "node:22-slim"
 
     steps:
       - name: Checkout Code
