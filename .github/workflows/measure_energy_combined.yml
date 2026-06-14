@@ -98,7 +98,7 @@ jobs:
       - name: Profile Yarn Install
         run: |
           $w3cTraceparent = "00-$((New-Guid).Guid.Replace('-',''))-$(((New-Guid).Guid.Replace('-','')).Substring(0,16))-01"
-          $profilerCap = 900
+          $profilerCap = 1800
           $uprof = Start-Process -FilePath "$env:UPROF_PATH" -ArgumentList "timechart --event power --interval 100 -d $profilerCap -o `"$env:DATA_DIR\Yarn_Install\power_data.csv`"" -PassThru -WindowStyle Hidden
           Start-Sleep -Seconds 10
 
@@ -482,7 +482,7 @@ jobs:
       - name: Profile Yarn Install
         run: |
           W3C_TRACEPARENT="00-$(uuidgen | tr -d '-' | tr '[:upper:]' '[:lower:]')-$(uuidgen | tr -d '-' | tr '[:upper:]' '[:lower:]' | cut -c1-16)-01"
-          PROFILER_CAP=900
+          PROFILER_CAP=1800
           sudo powermetrics --samplers cpu_power -i 100 -n $((PROFILER_CAP * 10)) > "$DATA_DIR/Yarn_Install/power_data.txt" 2>/dev/null &
           PROF_PID=$!
           sleep 10
