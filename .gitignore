@@ -9,3 +9,6 @@ coverage/
 dist/
 test/public/
 client/public/fonts/*.woff*
+
+# Energy profiling telemetry (uploaded to MinIO, not version-controlled)
+ResearchData/
