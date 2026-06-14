@@ -103,7 +103,7 @@ jobs:
           Start-Sleep -Seconds 10
 
           $startTime = Get-Date -Format "yyyy-MM-dd HH:mm:ss.fff"
-          docker run --rm -v "${PWD}:/app" -w /app --platform linux/amd64 $env:NODE_IMAGE yarn install --frozen-lockfile ; $global:LASTEXITCODE = 0
+          docker run --rm -v "${PWD}:/app" -w /app --platform linux/amd64 $env:NODE_IMAGE yarn install --frozen-lockfile --network-timeout 600000 ; $global:LASTEXITCODE = 0
           $endTime = Get-Date -Format "yyyy-MM-dd HH:mm:ss.fff"
 
           Start-Sleep -Seconds 10
@@ -488,7 +488,7 @@ jobs:
           sleep 10
 
           START_TIME=$(python3 -c "from datetime import datetime; print(datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3])")
-          docker run --rm -v "${PWD}:/app" -w /app --platform linux/arm64 "$NODE_IMAGE" yarn install --frozen-lockfile || true
+          docker run --rm -v "${PWD}:/app" -w /app --platform linux/arm64 "$NODE_IMAGE" yarn install --frozen-lockfile --network-timeout 600000 || true
           END_TIME=$(python3 -c "from datetime import datetime; print(datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3])")
 
           sleep 10
