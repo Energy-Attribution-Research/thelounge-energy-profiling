@@ -380,12 +380,12 @@ jobs:
 
           Write-Host "Uploading to MinIO Cloud (thelounge project)..."
           $awsExe = "C:\Program Files\Amazon\AWSCLIV2\aws.exe"
-          & $awsExe s3 cp "$env:DATA_DIR\hardware_metadata.json" "s3://energy-research-data/raw-telemetry/$env:PROJECT_NAME/$env:RUN_ID/hardware_metadata.json" --endpoint-url http://100.67.86.32:9000
-          & $awsExe s3 cp "$env:DATA_DIR\Idle.zip"                   "s3://energy-research-data/raw-telemetry/$env:PROJECT_NAME/$env:RUN_ID/Idle.zip"                   --endpoint-url http://100.67.86.32:9000
-          & $awsExe s3 cp "$env:DATA_DIR\Yarn_Install.zip"          "s3://energy-research-data/raw-telemetry/$env:PROJECT_NAME/$env:RUN_ID/Yarn_Install.zip"          --endpoint-url http://100.67.86.32:9000
-          & $awsExe s3 cp "$env:DATA_DIR\Build.zip"                 "s3://energy-research-data/raw-telemetry/$env:PROJECT_NAME/$env:RUN_ID/Build.zip"                 --endpoint-url http://100.67.86.32:9000
-          & $awsExe s3 cp "$env:DATA_DIR\Test.zip"                  "s3://energy-research-data/raw-telemetry/$env:PROJECT_NAME/$env:RUN_ID/Test.zip"                  --endpoint-url http://100.67.86.32:9000
-          & $awsExe s3 cp "$env:DATA_DIR\Vitest_Directory_Spans.zip" "s3://energy-research-data/raw-telemetry/$env:PROJECT_NAME/$env:RUN_ID/Vitest_Directory_Spans.zip" --endpoint-url http://100.67.86.32:9000
+          & $awsExe s3 cp "$env:DATA_DIR\hardware_metadata.json" "s3://energy-research-data/raw-telemetry/$env:PROJECT_NAME/$env:RUN_ID/hardware_metadata.json" --endpoint-url http://100.100.223.40:9000
+          & $awsExe s3 cp "$env:DATA_DIR\Idle.zip"                   "s3://energy-research-data/raw-telemetry/$env:PROJECT_NAME/$env:RUN_ID/Idle.zip"                   --endpoint-url http://100.100.223.40:9000
+          & $awsExe s3 cp "$env:DATA_DIR\Yarn_Install.zip"          "s3://energy-research-data/raw-telemetry/$env:PROJECT_NAME/$env:RUN_ID/Yarn_Install.zip"          --endpoint-url http://100.100.223.40:9000
+          & $awsExe s3 cp "$env:DATA_DIR\Build.zip"                 "s3://energy-research-data/raw-telemetry/$env:PROJECT_NAME/$env:RUN_ID/Build.zip"                 --endpoint-url http://100.100.223.40:9000
+          & $awsExe s3 cp "$env:DATA_DIR\Test.zip"                  "s3://energy-research-data/raw-telemetry/$env:PROJECT_NAME/$env:RUN_ID/Test.zip"                  --endpoint-url http://100.100.223.40:9000
+          & $awsExe s3 cp "$env:DATA_DIR\Vitest_Directory_Spans.zip" "s3://energy-research-data/raw-telemetry/$env:PROJECT_NAME/$env:RUN_ID/Vitest_Directory_Spans.zip" --endpoint-url http://100.100.223.40:9000
 
           Write-Host "Cleaning up local disk..."
           Remove-Item -Path "$env:DATA_DIR" -Recurse -Force
@@ -778,7 +778,7 @@ jobs:
 
           echo "Uploading to MinIO Cloud (thelounge project)..."
           docker run --rm -v "$DATA_DIR:/data" --entrypoint sh minio/mc -c "\
-            mc alias set myminio http://100.67.86.32:9000 researcher supersecretpassword && \
+            mc alias set myminio http://100.100.223.40:9000 researcher supersecretpassword && \
             mc cp /data/hardware_metadata.json myminio/energy-research-data/raw-telemetry/$PROJECT_NAME/$RUN_ID/hardware_metadata.json && \
             mc cp /data/Idle.zip                   myminio/energy-research-data/raw-telemetry/$PROJECT_NAME/$RUN_ID/Idle.zip && \
             mc cp /data/Yarn_Install.zip           myminio/energy-research-data/raw-telemetry/$PROJECT_NAME/$RUN_ID/Yarn_Install.zip && \
