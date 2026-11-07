@@ -226,6 +226,17 @@ jobs:
           }
           Write-Host "Runner container ID: $containerId"
 
+          # Known load for energy gate tests: only a test PR adds .energy/known_load.json.
+          $knownLoad = $null
+          $script:knownLoadApplied = $false
+          if (Test-Path -LiteralPath ".energy/known_load.json") {
+            $loadLine = [string](node scripts\known_load.js)
+            if ($LASTEXITCODE -ne 0) { throw "Invalid .energy/known_load.json" }
+            $parts = $loadLine.Trim() -split ' '
+            $knownLoad = @{ Task = $parts[0]; Mode = $parts[1]; Value = [double]$parts[2] }
+            Write-Host "Known load for this run: $($knownLoad.Mode) $($knownLoad.Value) on $($knownLoad.Task)"
+          }
+
           function Invoke-PipelineSpan {
             param(
               [Parameter(Mandatory=$true)][string]$Name,
@@ -239,6 +250,17 @@ jobs:
             $execArgs = @("exec", $containerId, "yarn", "vitest", "run") + $VitestArgs
             & docker @execArgs
             $exitCode = $LASTEXITCODE
+            $loadNote = ""
+            if ($knownLoad -and -not $Calibration -and $Name -eq $knownLoad.Task) {
+              if ($knownLoad.Mode -eq "repeat") {
+                for ($k = 1; $k -lt $knownLoad.Value; $k++) { & docker @execArgs }
+              } else {
+                & docker exec $containerId node -e "const end=Date.now()+$($knownLoad.Value)*1000;let x=1;while(Date.now()<end){x=(x*48271)%2147483647}"
+              }
+              $loadNote = " + known load ($($knownLoad.Mode) $($knownLoad.Value))"
+              $script:knownLoadApplied = $true
+              Write-Host "Known load added to ${Name}: $($knownLoad.Mode) $($knownLoad.Value)"
+            }
             $endMs = [DateTimeOffset]::Now.ToUnixTimeMilliseconds()
 
             if ($exitCode -ne 0 -and -not $Calibration) {
@@ -248,7 +270,7 @@ jobs:
               Write-Host "Calibration span $Name exited with code $exitCode; recording as calibration overhead."
             }
 
-            $commandText = "yarn vitest run " + ($VitestArgs -join " ")
+            $commandText = "yarn vitest run " + ($VitestArgs -join " ") + $loadNote
             node scripts\make_pipeline_spans.js record `
               --output "$rawSpans" `
               --name "$Name" `
@@ -294,6 +316,10 @@ jobs:
 
           Start-Sleep -Seconds 10
           Stop-Process -Id $uprof.Id -Force -ErrorAction SilentlyContinue
+
+          if ($knownLoad -and -not $script:knownLoadApplied) {
+            throw "Known load task $($knownLoad.Task) is not a span in this scenario"
+          }
 
           echo "${scenario}_Start,$startTime,$w3cTraceparent,$startEpochMs" > "$scenarioDir\timestamps.csv"
           echo "${scenario}_End,$endTime,$w3cTraceparent" >> "$scenarioDir\timestamps.csv"
@@ -612,6 +638,20 @@ jobs:
             exit 1
           fi
 
+          # Known load for energy gate tests: only a test PR adds .energy/known_load.json.
+          LOAD_TASK=""
+          LOAD_MODE=""
+          LOAD_VALUE=""
+          LOAD_APPLIED="false"
+          if [ -f .energy/known_load.json ]; then
+            read -r LOAD_TASK LOAD_MODE LOAD_VALUE < <(node scripts/known_load.js)
+            if [ -z "$LOAD_TASK" ]; then
+              echo "Invalid .energy/known_load.json"
+              exit 1
+            fi
+            echo "Known load for this run: $LOAD_MODE $LOAD_VALUE on $LOAD_TASK"
+          fi
+
           run_span() {
             local name="$1"
             local calibration="$2"
@@ -624,6 +664,19 @@ jobs:
             set +e
             docker exec "$CONTAINER_ID" yarn vitest run "$@"
             local exit_code=$?
+            local load_note=""
+            if [ "$calibration" != "true" ] && [ "$name" = "$LOAD_TASK" ]; then
+              if [ "$LOAD_MODE" = "repeat" ]; then
+                for ((k = 1; k < LOAD_VALUE; k++)); do
+                  docker exec "$CONTAINER_ID" yarn vitest run "$@"
+                done
+              else
+                docker exec "$CONTAINER_ID" node -e "const end=Date.now()+${LOAD_VALUE}*1000;let x=1;while(Date.now()<end){x=(x*48271)%2147483647}"
+              fi
+              load_note=" + known load ($LOAD_MODE $LOAD_VALUE)"
+              LOAD_APPLIED="true"
+              echo "Known load added to $name: $LOAD_MODE $LOAD_VALUE"
+            fi
             set -e
             local end_ms
             end_ms=$(node -e "console.log(Date.now())")
@@ -642,7 +695,7 @@ jobs:
               --end-ms "$end_ms" \
               --exit-code "$exit_code" \
               --test-path "$test_path" \
-              --command "yarn vitest run $*" \
+              --command "yarn vitest run $*$load_note" \
               --calibration "$calibration" \
               --operation "vitest-directory"
           }
@@ -665,6 +718,11 @@ jobs:
           sleep 10
           sudo kill $PROF_PID 2>/dev/null || true
           wait $PROF_PID 2>/dev/null || true
+
+          if [ -n "$LOAD_TASK" ] && [ "$LOAD_APPLIED" != "true" ]; then
+            echo "Known load task $LOAD_TASK is not a span in this scenario"
+            exit 1
+          fi
 
           echo "${SCENARIO}_Start,$START_TIME,$W3C_TRACEPARENT,$START_EPOCH_MS" > "$SCENARIO_DIR/timestamps.csv"
           echo "${SCENARIO}_End,$END_TIME,$W3C_TRACEPARENT" >> "$SCENARIO_DIR/timestamps.csv"
