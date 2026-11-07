@@ -1,0 +1,1 @@
+{ "task": "vitest.plugins", "mode": "repeat", "factor": 2 }
